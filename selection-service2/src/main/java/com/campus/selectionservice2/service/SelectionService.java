@@ -1,5 +1,6 @@
 package com.campus.selectionservice2.service;
 
+import com.campus.selectionservice2.client.ProfileClient;
 import com.campus.selectionservice2.dto.InviteStudentsDto;
 import com.campus.selectionservice2.dto.ShortlistDto;
 import com.campus.selectionservice2.model.*;
@@ -27,7 +28,8 @@ public class SelectionService {
     private final RoundSelectionRepository roundRepo;
     private final FinalPlacementRepository finalRepo;
     private final StudentTimelineRepository timelineRepo;
-    private final RestTemplate restTemplate;
+    private final ProfileClient profileClient;
+
 
     /* INVITE STUDENTS (from drive-service) */
     public void invite(InviteStudentsDto dto) {
@@ -102,13 +104,7 @@ public class SelectionService {
         headers.set("Authorization", token);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
-        // 🔐 lock student profile
-        restTemplate.exchange(
-                "http://localhost:8081/api/profile/blacklist/email/" + email,
-                HttpMethod.PUT,
-                entity,
-                Void.class
-        );
+        profileClient.blacklistStudentByEmail(email);
 
         log(email, driveId, "OFFER ACCEPTED");
     }

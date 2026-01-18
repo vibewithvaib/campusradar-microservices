@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="campusradar-gateway" />
+        <module name="discovery-service" />
       </profile>
       <profile name="Annotation profile for selection-service2" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -31,6 +32,7 @@
       <module name="auth-service" options="-parameters" />
       <module name="auth-service2" options="-parameters" />
       <module name="campusradar-gateway" options="-parameters" />
+      <module name="discovery-service" options="-parameters" />
       <module name="drive-service" options="-parameters" />
       <module name="profile-service2" options="-parameters" />
       <module name="selection-service2" options="-parameters" />

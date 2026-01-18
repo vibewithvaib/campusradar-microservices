@@ -11,6 +11,7 @@
         <option value="$PROJECT_DIR$/profile-service2/pom.xml" />
         <option value="$PROJECT_DIR$/drive-service/pom.xml" />
         <option value="$PROJECT_DIR$/selection-service2/pom.xml" />
+        <option value="$PROJECT_DIR$/discovery-service/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
