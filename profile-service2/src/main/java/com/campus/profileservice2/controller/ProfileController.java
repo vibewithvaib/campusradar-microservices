@@ -62,6 +62,11 @@ public class ProfileController {
 
         return ResponseEntity.ok(service.getFullProfile(id));
     }
+    @PutMapping("/blacklist/email/{email}")
+    public ResponseEntity<?> blacklistByEmail(@PathVariable String email) {
+        service.blacklistStudentByEmail(email);
+        return ResponseEntity.ok("BLACKLISTED");
+    }
 
 
 }

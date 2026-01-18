@@ -80,11 +80,13 @@ public class ProfileService {
         recruiterRepo.save(rp);
     }
 
-    public void blacklistStudent(Long studentId) {
-        StudentProfile p = profileRepo.findById(studentId).orElseThrow();
+    public void blacklistStudentByEmail(String email) {
+        StudentProfile p = profileRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
         p.setBlacklisted(true);
         profileRepo.save(p);
     }
+
     public StudentProfileResponseDto getFullProfile(Long studentId) {
 
         StudentProfile p = profileRepo.findById(studentId).orElseThrow();
