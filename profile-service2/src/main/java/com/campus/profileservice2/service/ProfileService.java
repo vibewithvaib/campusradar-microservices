@@ -110,6 +110,29 @@ public class ProfileService {
 
         return new StudentProfileResponseDto(p, ac, skills, exp, docs);
     }
+    public List<StudentEligibilityDto> getEligibleStudents() {
+
+        List<StudentProfile> students =
+                profileRepo.findByVerifiedTrueAndBlacklistedFalse();
+
+        return students.stream().map(s -> {
+
+            StudentEligibilityDto dto = new StudentEligibilityDto();
+            dto.setEmail(s.getEmail());
+            dto.setTenthMarks(s.getAcademics().getTenthMarks());
+            dto.setTwelfthMarks(s.getAcademics().getTwelfthMarks());
+            dto.setSkills(
+                    s.getSkills().stream()
+                            .map(StudentSkill::getSkill)
+                            .toList()
+            );
+            return dto;
+
+        }).toList();
+    }
+
+
+
 
 }
 

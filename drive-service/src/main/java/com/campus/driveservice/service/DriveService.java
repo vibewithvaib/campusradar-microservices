@@ -1,7 +1,11 @@
 package com.campus.driveservice.service;
 
+import com.campus.driveservice.client.ProfileClient;
+import com.campus.driveservice.client.SelectionClient;
 import com.campus.driveservice.dto.CreateDriveRequestDto;
 import com.campus.driveservice.dto.DriveResponseDto;
+import com.campus.driveservice.dto.InviteStudentsDto;
+import com.campus.driveservice.dto.StudentEligibilityDto;
 import com.campus.driveservice.model.Drive;
 import com.campus.driveservice.model.DriveCriteria;
 import com.campus.driveservice.model.DriveRound;
@@ -23,6 +27,8 @@ public class DriveService {
     private final DriveRepository driveRepo;
     private final DriveCriteriaRepository criteriaRepo;
     private final DriveRoundRepository roundRepo;
+    private final ProfileClient profileClient;
+    private final SelectionClient selectionClient;
 
     public DriveResponseDto createDrive(
             String recruiterEmail,
@@ -59,6 +65,7 @@ public class DriveService {
         Drive drive = driveRepo.findById(id).orElseThrow();
         drive.setStatus(DriveStatus.ACTIVE);
         driveRepo.save(drive);
+        autoShortlist(id);
         return buildResponse(drive);
     }
 
@@ -67,6 +74,26 @@ public class DriveService {
         Drive drive = driveRepo.findById(id).orElseThrow();
         return buildResponse(drive);
     }
+
+    public void autoShortlist(Long driveId) {
+
+        Drive drive = driveRepo.findById(driveId).orElseThrow();
+        DriveCriteria c = criteriaRepo.findByDrive(drive);
+
+        List<StudentEligibilityDto> students =
+                profileClient.getEligibleStudents();
+
+        List<String> eligible = students.stream()
+                .filter(s -> s.getTenthMarks() >= c.getMinTenth())
+                .filter(s -> s.getTwelfthMarks() >= c.getMinTwelfth())
+                .map(StudentEligibilityDto::getEmail)
+                .toList();
+
+        selectionClient.invite(
+                new InviteStudentsDto(driveId, eligible)
+        );
+    }
+
 
     @Transactional(readOnly = true)
     public List<DriveResponseDto> getDrivesForRole(

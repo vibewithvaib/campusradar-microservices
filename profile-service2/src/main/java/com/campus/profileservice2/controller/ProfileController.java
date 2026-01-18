@@ -1,12 +1,15 @@
 package com.campus.profileservice2.controller;
 
 import com.campus.profileservice2.dto.RecruiterProfileRequestDto;
+import com.campus.profileservice2.dto.StudentEligibilityDto;
 import com.campus.profileservice2.dto.StudentProfileRequestDto;
 import com.campus.profileservice2.service.ProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -62,10 +65,14 @@ public class ProfileController {
 
         return ResponseEntity.ok(service.getFullProfile(id));
     }
-    @PutMapping("/blacklist/email/{email}")
+    @PostMapping("/blacklist/{email}")
     public ResponseEntity<?> blacklistStudentByEmail(@PathVariable String email) {
         service.blacklistStudentByEmail(email);
         return ResponseEntity.ok("BLACKLISTED");
+    }
+    @GetMapping("/eligible")
+    public List<StudentEligibilityDto> eligibleStudents() {
+        return service.getEligibleStudents();
     }
 
 
