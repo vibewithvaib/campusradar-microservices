@@ -1,12 +1,13 @@
 package com.campus.selectionservice2.controller;
 
-import com.campus.selectionservice2.dto.InviteStudentsDto;
-import com.campus.selectionservice2.dto.ShortlistDto;
+import com.campus.selectionservice2.dto.*;
 import com.campus.selectionservice2.service.SelectionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/selection")
@@ -15,54 +16,115 @@ public class SelectionController {
 
     private final SelectionService service;
 
+    /* ================================
+       RECRUITER: INVITE STUDENTS
+       ================================ */
     @PostMapping("/invite")
-    public ResponseEntity<?> invite(@RequestBody InviteStudentsDto dto) {
-        service.invite(dto);
-        return ResponseEntity.ok("INVITED");
-    }
-
-    @PostMapping("/accept/{driveId}")
-    public ResponseEntity<?> accept(
-            @PathVariable Long driveId,
-            HttpServletRequest request
-    ) {
-        service.acceptDrive(
-                (String) request.getAttribute("email"),
-                driveId
-        );
-        return ResponseEntity.ok("ACCEPTED");
-    }
-
-    @PostMapping("/shortlist")
-    public ResponseEntity<?> shortlist(
-            @RequestBody ShortlistDto dto,
+    public ResponseEntity<?> inviteStudents(
+            @RequestBody InviteStudentsDto dto,
             HttpServletRequest request
     ) {
         if (!"RECRUITER".equals(request.getAttribute("role"))) {
             return ResponseEntity.status(403).build();
         }
 
-        service.shortlist(dto);
-        return ResponseEntity.ok("SHORTLISTED");
+        service.inviteStudents(dto.getDriveId());
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/final-select/{id}")
-    public ResponseEntity<?> finalSelect(@PathVariable Long id) {
-        service.finalSelect(id);
-        return ResponseEntity.ok("FINAL SELECTED");
+    /* ================================
+       RECRUITER: SHORTLIST NEXT ROUND
+       ================================ */
+    @PostMapping("/shortlist")
+    public ResponseEntity<?> shortlistNextRound(
+            @RequestBody ShortlistRequestDto dto,
+            @RequestParam int totalRounds,
+            HttpServletRequest request
+    ) {
+        if (!"RECRUITER".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        service.shortlistNextRound(
+                dto.getDriveId(),
+                totalRounds,
+                dto.getSelectedStudentEmails()
+        );
+
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/offer-accept/{driveId}")
-    public ResponseEntity<?> offerAccept(
+    /* ================================
+       RECRUITER: FINAL SELECT
+       ================================ */
+    @PostMapping("/final-select")
+    public ResponseEntity<?> finalSelect(
+            @RequestBody ShortlistRequestDto dto,
+            HttpServletRequest request
+    ) {
+        if (!"RECRUITER".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        service.finalSelect(
+                dto.getDriveId(),
+                dto.getSelectedStudentEmails()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    /* ================================
+       STUDENT: VIEW STATUS
+       ================================ */
+    @GetMapping("/status")
+    public ResponseEntity<List<SelectionStatusDto>> studentStatus(
+            HttpServletRequest request
+    ) {
+        if (!"STUDENT".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        String email = (String) request.getAttribute("email");
+        return ResponseEntity.ok(
+                service.getStudentStatus(email)
+        );
+    }
+
+    /* ================================
+       STUDENT: ACCEPT FINAL OFFER
+       ================================ */
+    @PostMapping("/accept")
+    public ResponseEntity<?> acceptOffer(
+            @RequestBody FinalOfferDto dto,
+            HttpServletRequest request
+    ) {
+        if (!"STUDENT".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        String email = (String) request.getAttribute("email");
+        service.acceptOffer(email, dto.getDriveId());
+        return ResponseEntity.ok().build();
+    }
+
+    /* ================================
+       TPO / RECRUITER: DRIVE PROGRESS
+       ================================ */
+    @GetMapping("/drive/{driveId}/progress")
+    public ResponseEntity<DriveProgressDto> driveProgress(
             @PathVariable Long driveId,
             HttpServletRequest request
     ) {
-        service.acceptOffer(
-                (String) request.getAttribute("email"),
-                driveId,
-                request.getHeader("Authorization")
+        String role = (String) request.getAttribute("role");
+
+        if (!("TPO".equals(role) || "RECRUITER".equals(role))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(
+                service.getDriveProgress(driveId)
         );
-        return ResponseEntity.ok("PLACED");
     }
 }
 

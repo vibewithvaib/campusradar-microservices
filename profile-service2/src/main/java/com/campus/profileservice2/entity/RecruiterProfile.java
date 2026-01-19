@@ -8,6 +8,7 @@ import lombok.Data;
 @Entity
 @Data
 public class RecruiterProfile {
+
     @Id
     @GeneratedValue
     private Long id;
@@ -17,4 +18,5 @@ public class RecruiterProfile {
     private String designation;
     private String description;
 }
+
 

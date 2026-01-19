@@ -1,4 +1,4 @@
-package com.campus.profileservice2.dto;
+package com.campus.selectionservice2.dto;
 
 import lombok.Data;
 

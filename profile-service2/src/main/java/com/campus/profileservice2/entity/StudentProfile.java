@@ -9,11 +9,13 @@ import java.util.List;
 @Data
 public class StudentProfile {
 
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long id;
 
     private String email;
     private String fullName;
+    private String rollNo;
     private String branch;
     private String college;
 
@@ -27,10 +29,11 @@ public class StudentProfile {
     private List<StudentSkill> skills;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
-    private List<StudentExperience> experiences;
+    private List<StudentDocument> documents;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
-    private List<StudentDocument> documents;
+    private List<StudentExperience> experiences;
 }
+
 
 

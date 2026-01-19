@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class StudentDocumentDto {
-    private String type;
+    private String type;   // 10TH, 12TH, RESUME, CERTIFICATE
     private String url;
 }
+
 

@@ -9,15 +9,20 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class StudentTimeline {
+public class DriveSelection {
 
     @Id
     @GeneratedValue
     private Long id;
 
-    private String studentEmail;
     private Long driveId;
-    private String action;
-    private LocalDateTime time = LocalDateTime.now();
+    private String studentEmail;
+
+    private int currentRound;
+    private boolean active = true;
+    private boolean selected = false;
+    private boolean rejected = false;
+
+    private LocalDateTime updatedAt;
 }
 

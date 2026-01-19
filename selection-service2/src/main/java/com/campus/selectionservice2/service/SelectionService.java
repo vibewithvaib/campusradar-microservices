@@ -1,119 +1,159 @@
 package com.campus.selectionservice2.service;
 
 import com.campus.selectionservice2.client.ProfileClient;
-import com.campus.selectionservice2.dto.InviteStudentsDto;
-import com.campus.selectionservice2.dto.ShortlistDto;
-import com.campus.selectionservice2.model.*;
+import com.campus.selectionservice2.dto.DriveProgressDto;
+import com.campus.selectionservice2.dto.SelectionStatusDto;
+import com.campus.selectionservice2.dto.StudentEligibilityDto;
+import com.campus.selectionservice2.model.DriveSelection;
+import com.campus.selectionservice2.model.FinalPlacement;
+import com.campus.selectionservice2.repository.DriveSelectionRepository;
 import com.campus.selectionservice2.repository.FinalPlacementRepository;
-import com.campus.selectionservice2.repository.RoundSelectionRepository;
-import com.campus.selectionservice2.repository.StudentDriveRepository;
-import com.campus.selectionservice2.repository.StudentTimelineRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class SelectionService {
 
-    private final StudentDriveRepository studentDriveRepo;
-    private final RoundSelectionRepository roundRepo;
-    private final FinalPlacementRepository finalRepo;
-    private final StudentTimelineRepository timelineRepo;
+    private final DriveSelectionRepository selectionRepo;
+    private final FinalPlacementRepository placementRepo;
     private final ProfileClient profileClient;
 
+    /* ================================
+       RECRUITER: INVITE STUDENTS
+       ================================ */
+    public void inviteStudents(Long driveId) {
 
-    /* INVITE STUDENTS (from drive-service) */
-    public void invite(InviteStudentsDto dto) {
-        for (String email : dto.getStudentEmails()) {
-            StudentDrive sd = new StudentDrive();
-            sd.setDriveId(dto.getDriveId());
-            sd.setStudentEmail(email);
-            studentDriveRepo.save(sd);
+        List<StudentEligibilityDto> eligibleStudents =
+                profileClient.getEligibleStudents();
 
-            log(email, dto.getDriveId(), "INVITED TO DRIVE");
+        for (StudentEligibilityDto s : eligibleStudents) {
+
+            if (selectionRepo
+                    .findByDriveIdAndStudentEmail(driveId, s.getEmail())
+                    .isPresent()) continue;
+
+            DriveSelection ds = new DriveSelection();
+            ds.setDriveId(driveId);
+            ds.setStudentEmail(s.getEmail());
+            ds.setCurrentRound(1);
+            ds.setActive(true);
+            ds.setUpdatedAt(LocalDateTime.now());
+            selectionRepo.save(ds);
         }
     }
 
-    /* STUDENT ACCEPTS DRIVE */
-    public void acceptDrive(String email, Long driveId) {
-        StudentDrive sd = studentDriveRepo
-                .findAll().stream()
-                .filter(s -> s.getStudentEmail().equals(email)
-                        && s.getDriveId().equals(driveId))
-                .findFirst().orElseThrow();
+    /* ================================
+       STUDENT: VIEW STATUS
+       ================================ */
+    @Transactional(readOnly = true)
+    public List<SelectionStatusDto> getStudentStatus(String email) {
 
-        sd.setStatus(SelectionStatus.ACCEPTED);
-        studentDriveRepo.save(sd);
-        log(email, driveId, "DRIVE ACCEPTED");
+        return selectionRepo.findByStudentEmail(email)
+                .stream()
+                .map(s -> new SelectionStatusDto(
+                        s.getDriveId(),
+                        s.getCurrentRound(),
+                        s.isActive(),
+                        s.isSelected(),
+                        s.isRejected()
+                ))
+                .toList();
     }
 
-    /* RECRUITER SHORTLISTS NEXT ROUND */
-    public void shortlist(ShortlistDto dto) {
-        StudentDrive sd = studentDriveRepo.findById(dto.getStudentDriveId())
-                .orElseThrow();
+    /* ================================
+       RECRUITER: SHORTLIST NEXT ROUND
+       ================================ */
+    public void shortlistNextRound(
+            Long driveId,
+            int totalRounds,
+            List<String> selectedEmails
+    ) {
 
-        sd.setCurrentRound(dto.getNextRound());
-        sd.setStatus(SelectionStatus.IN_PROGRESS);
-        studentDriveRepo.save(sd);
+        List<DriveSelection> active =
+                selectionRepo.findByDriveIdAndActiveTrue(driveId);
 
-        RoundSelection rs = new RoundSelection();
-        rs.setStudentDriveId(sd.getId());
-        rs.setRoundNumber(dto.getNextRound());
-        rs.setStatus(SelectionStatus.IN_PROGRESS);
-        roundRepo.save(rs);
+        for (DriveSelection ds : active) {
 
-        log(sd.getStudentEmail(), sd.getDriveId(), "SHORTLISTED TO ROUND " + dto.getNextRound());
+            if (selectedEmails.contains(ds.getStudentEmail())) {
+
+                if (ds.getCurrentRound() >= totalRounds) {
+                    throw new RuntimeException("Max rounds reached");
+                }
+
+                ds.setCurrentRound(ds.getCurrentRound() + 1);
+                ds.setUpdatedAt(LocalDateTime.now());
+            } else {
+                ds.setActive(false);
+                ds.setRejected(true);
+            }
+
+            selectionRepo.save(ds);
+        }
     }
 
-    /* FINAL SELECT */
-    public void finalSelect(Long studentDriveId) {
-        StudentDrive sd = studentDriveRepo.findById(studentDriveId).orElseThrow();
-        sd.setStatus(SelectionStatus.FINAL_SELECTED);
-        studentDriveRepo.save(sd);
+    /* ================================
+       RECRUITER: FINAL SELECT
+       ================================ */
+    public void finalSelect(Long driveId, List<String> selectedEmails) {
 
-        finalRepo.save(new FinalPlacement(
-                null,
-                sd.getStudentEmail(),
-                sd.getDriveId(),
-                false,
-                LocalDateTime.now()
-        ));
+        for (String email : selectedEmails) {
 
-        log(sd.getStudentEmail(), sd.getDriveId(), "FINAL SELECTED");
+            if (placementRepo.existsByStudentEmail(email)) {
+                throw new RuntimeException("Student already placed");
+            }
+
+            DriveSelection ds = selectionRepo
+                    .findByDriveIdAndStudentEmail(driveId, email)
+                    .orElseThrow();
+
+            ds.setSelected(true);
+            ds.setActive(false);
+            ds.setUpdatedAt(LocalDateTime.now());
+            selectionRepo.save(ds);
+
+            FinalPlacement fp = new FinalPlacement();
+            fp.setDriveId(driveId);
+            fp.setStudentEmail(email);
+            fp.setAccepted(false);
+            fp.setPlacedAt(LocalDateTime.now());
+            placementRepo.save(fp);
+        }
     }
 
-    /* STUDENT ACCEPTS OFFER */
-    public void acceptOffer(String email, Long driveId,String token) {
-        FinalPlacement fp = finalRepo.findAll().stream()
-                .filter(f -> f.getStudentEmail().equals(email)
-                        && f.getDriveId().equals(driveId))
-                .findFirst().orElseThrow();
+    /* ================================
+       STUDENT: ACCEPT OFFER
+       ================================ */
+    public void acceptOffer(String email, Long driveId) {
+
+        FinalPlacement fp = placementRepo.findByStudentEmail(email)
+                .orElseThrow(() -> new RuntimeException("Offer not found"));
 
         fp.setAccepted(true);
-        finalRepo.save(fp);
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", token);
+        placementRepo.save(fp);
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        profileClient.blacklistStudentByEmail(email);
-
-        log(email, driveId, "OFFER ACCEPTED");
+        profileClient.blacklistStudent(email);
     }
 
-    private void log(String email, Long driveId, String action) {
-        StudentTimeline t = new StudentTimeline();
-        t.setStudentEmail(email);
-        t.setDriveId(driveId);
-        t.setAction(action);
-        timelineRepo.save(t);
+    /* ================================
+       DASHBOARD: DRIVE PROGRESS
+       ================================ */
+    @Transactional(readOnly = true)
+    public DriveProgressDto getDriveProgress(Long driveId) {
+
+        List<DriveSelection> all = selectionRepo.findByDriveId(driveId);
+
+        int total = all.size();
+        int active = (int) all.stream().filter(DriveSelection::isActive).count();
+        int rejected = (int) all.stream().filter(DriveSelection::isRejected).count();
+        int selected = (int) all.stream().filter(DriveSelection::isSelected).count();
+
+        return new DriveProgressDto(driveId, total, active, rejected, selected);
     }
+
 }
