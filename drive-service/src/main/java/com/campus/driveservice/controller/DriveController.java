@@ -71,4 +71,10 @@ public class DriveController {
                 )
         );
     }
+
+    @GetMapping("/{id}/owner")
+    public String getOwner(@PathVariable Long id) {
+        return service.getDrive(id).getRecruiterEmail();
+    }
+
 }

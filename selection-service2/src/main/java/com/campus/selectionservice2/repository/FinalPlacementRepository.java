@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface FinalPlacementRepository
         extends JpaRepository<FinalPlacement, Long> {
 
-    Optional<FinalPlacement> findByStudentEmail(String email);
+    Optional<FinalPlacement> findByStudentEmailAndDriveId(String email,Long driveId);
 
     boolean existsByStudentEmail(String email);
 }

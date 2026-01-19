@@ -131,7 +131,7 @@ public class SelectionService {
        ================================ */
     public void acceptOffer(String email, Long driveId) {
 
-        FinalPlacement fp = placementRepo.findByStudentEmail(email)
+        FinalPlacement fp = placementRepo.findByStudentEmailAndDriveId(email,driveId)
                 .orElseThrow(() -> new RuntimeException("Offer not found"));
 
         fp.setAccepted(true);

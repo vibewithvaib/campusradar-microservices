@@ -1,5 +1,6 @@
 package com.campus.selectionservice2.controller;
 
+import com.campus.selectionservice2.client.DriveClient;
 import com.campus.selectionservice2.dto.*;
 import com.campus.selectionservice2.service.SelectionService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import java.util.List;
 public class SelectionController {
 
     private final SelectionService service;
+    private final DriveClient driveClient;
 
     /* ================================
        RECRUITER: INVITE STUDENTS
@@ -41,7 +43,8 @@ public class SelectionController {
             @RequestParam int totalRounds,
             HttpServletRequest request
     ) {
-        if (!"RECRUITER".equals(request.getAttribute("role"))) {
+        String owner = driveClient.getDriveOwner(dto.getDriveId());
+        if (!"RECRUITER".equals(request.getAttribute("role")) && owner.equals(request.getAttribute("email"))) {
             return ResponseEntity.status(403).build();
         }
 
@@ -112,19 +115,26 @@ public class SelectionController {
        TPO / RECRUITER: DRIVE PROGRESS
        ================================ */
     @GetMapping("/drive/{driveId}/progress")
-    public ResponseEntity<DriveProgressDto> driveProgress(
+    public ResponseEntity<?> driveProgress(
             @PathVariable Long driveId,
             HttpServletRequest request
     ) {
         String role = (String) request.getAttribute("role");
+        String email = (String) request.getAttribute("email");
+
+        if ("RECRUITER".equals(role)) {
+            String owner = driveClient.getDriveOwner(driveId);
+            if (!owner.equals(email)) {
+                return ResponseEntity.status(403).build();
+            }
+        }
 
         if (!("TPO".equals(role) || "RECRUITER".equals(role))) {
             return ResponseEntity.status(403).build();
         }
 
-        return ResponseEntity.ok(
-                service.getDriveProgress(driveId)
-        );
+        return ResponseEntity.ok(service.getDriveProgress(driveId));
     }
+
 }
 
