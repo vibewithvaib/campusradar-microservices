@@ -87,6 +87,25 @@ public class ProfileController {
         return ResponseEntity.ok(
                 profileService.getStudents(page, size)
         );
+
+    }
+    @GetMapping("/students/search")
+    public ResponseEntity<?> searchStudents(
+            @RequestParam(required = false) String branch,
+            @RequestParam(required = false) Double min10,
+            @RequestParam(required = false) Double min12,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request
+    ) {
+        if (!("RECRUITER".equals(request.getAttribute("role")) ||
+                "TPO".equals(request.getAttribute("role")))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(
+                profileService.searchStudents(branch, min10, min12, page, size)
+        );
     }
 
 

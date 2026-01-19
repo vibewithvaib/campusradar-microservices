@@ -1,5 +1,6 @@
 package com.campus.driveservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -19,6 +20,7 @@ public class DriveCriteria {
     private String requiredSkills; // comma separated
 
     @OneToOne
+    @JsonIgnore
     private Drive drive;
 }
 

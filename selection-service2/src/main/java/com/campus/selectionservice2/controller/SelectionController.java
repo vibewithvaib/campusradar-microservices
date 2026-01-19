@@ -30,7 +30,7 @@ public class SelectionController {
             return ResponseEntity.status(403).build();
         }
 
-        service.inviteStudents(dto.getDriveId());
+        service.inviteStudents(dto.getDriveId(),dto.getStudentEmails());
         return ResponseEntity.ok().build();
     }
 
@@ -44,7 +44,8 @@ public class SelectionController {
             HttpServletRequest request
     ) {
         String owner = driveClient.getDriveOwner(dto.getDriveId());
-        if (!"RECRUITER".equals(request.getAttribute("role")) && owner.equals(request.getAttribute("email"))) {
+        if (!"RECRUITER".equals(request.getAttribute("role")) ||
+                !owner.equals(request.getAttribute("email"))) {
             return ResponseEntity.status(403).build();
         }
 
@@ -135,6 +136,56 @@ public class SelectionController {
 
         return ResponseEntity.ok(service.getDriveProgress(driveId));
     }
+
+    @GetMapping("/drive/{driveId}/students")
+    public ResponseEntity<?> driveStudents(
+            @PathVariable Long driveId,
+            HttpServletRequest request
+    ) {
+        String role = (String) request.getAttribute("role");
+        String email = (String) request.getAttribute("email");
+
+        if ("RECRUITER".equals(role)) {
+            String owner = driveClient.getDriveOwner(driveId);
+            if (!owner.equals(email)) {
+                return ResponseEntity.status(403).build();
+            }
+        }
+
+        if (!("TPO".equals(role) || "RECRUITER".equals(role))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(service.getStudentsOfDrive(driveId));
+    }
+
+    @PostMapping("/accept-invite")
+    public ResponseEntity<?> acceptInvite(
+            @RequestBody AcceptInviteDto dto,
+            HttpServletRequest request
+    ) {
+        if (!"STUDENT".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        service.acceptInvite(
+                (String) request.getAttribute("email"),
+                dto.getDriveId()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> tpoDashboard(HttpServletRequest request) {
+
+        if (!"TPO".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(service.getTpoDashboard());
+    }
+
+
 
 }
 

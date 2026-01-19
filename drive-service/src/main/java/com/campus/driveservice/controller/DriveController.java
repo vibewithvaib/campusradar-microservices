@@ -77,4 +77,17 @@ public class DriveController {
         return service.getDrive(id).getRecruiterEmail();
     }
 
+    @GetMapping("/{id}/eligible-preview")
+    public ResponseEntity<?> previewEligible(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        if (!"RECRUITER".equals(request.getAttribute("role"))) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(service.previewEligibleStudents(id));
+    }
+
+
 }

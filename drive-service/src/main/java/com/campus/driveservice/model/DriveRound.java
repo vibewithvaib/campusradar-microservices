@@ -1,5 +1,6 @@
 package com.campus.driveservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -18,5 +19,6 @@ public class DriveRound {
     private Integer roundNumber;
 
     @ManyToOne
+    @JsonIgnore
     private Drive drive;
 }

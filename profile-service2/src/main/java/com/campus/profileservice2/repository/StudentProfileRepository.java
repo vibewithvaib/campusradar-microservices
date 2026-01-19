@@ -15,6 +15,10 @@ public interface StudentProfileRepository
 
     Page<StudentProfile> findByVerifiedTrueAndBlacklistedFalse(Pageable pageable);
     List<StudentProfile> findByVerifiedTrueAndBlacklistedFalse();
+    Page<StudentProfile> findByBranchAndVerifiedTrueAndBlacklistedFalse(
+            String branch,
+            Pageable pageable
+    );
 
 }
 

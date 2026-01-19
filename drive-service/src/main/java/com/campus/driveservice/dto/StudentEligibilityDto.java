@@ -10,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentEligibilityDto {
-
+    private Long studentId;
     private String email;
     private Double tenthMarks;
     private Double twelfthMarks;

@@ -8,10 +8,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SelectionStatusDto {
+
     private Long driveId;
     private int currentRound;
+
+    private boolean invited;
+    private boolean acceptedInvite;
+
     private boolean active;
     private boolean selected;
     private boolean rejected;
 }
+
 

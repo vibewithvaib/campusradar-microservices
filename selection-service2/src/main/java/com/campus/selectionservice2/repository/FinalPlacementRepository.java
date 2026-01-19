@@ -11,4 +11,6 @@ public interface FinalPlacementRepository
     Optional<FinalPlacement> findByStudentEmailAndDriveId(String email,Long driveId);
 
     boolean existsByStudentEmail(String email);
+    long countByAcceptedTrue();
+
 }

@@ -16,4 +16,8 @@ public interface DriveSelectionRepository
     List<DriveSelection> findByDriveIdAndActiveTrue(Long driveId);
 
     List<DriveSelection> findByStudentEmail(String email);
+    long countByActiveTrue();
+    long countByRejectedTrue();
+    long countBySelectedTrue();
+
 }

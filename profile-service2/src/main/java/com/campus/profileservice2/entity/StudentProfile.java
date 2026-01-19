@@ -1,5 +1,6 @@
 package com.campus.profileservice2.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,15 +24,19 @@ public class StudentProfile {
     private boolean blacklisted = false;
 
     @OneToOne(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnore
     private StudentAcademics academics;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<StudentSkill> skills;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<StudentDocument> documents;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<StudentExperience> experiences;
 }
 

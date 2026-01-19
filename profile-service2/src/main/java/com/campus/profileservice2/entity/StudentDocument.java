@@ -1,5 +1,6 @@
 package com.campus.profileservice2.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class StudentDocument {
 
     @ManyToOne
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private StudentProfile student;
 }
 

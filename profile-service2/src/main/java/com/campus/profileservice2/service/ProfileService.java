@@ -146,6 +146,7 @@ public class ProfileService {
                 .stream()
                 .map(s -> {
                     StudentEligibilityDto dto = new StudentEligibilityDto();
+                    dto.setStudentId(s.getId());
                     dto.setEmail(s.getEmail());
                     dto.setTenthMarks(s.getAcademics().getTenthMarks());
                     dto.setTwelfthMarks(s.getAcademics().getTwelfthMarks());
@@ -158,6 +159,7 @@ public class ProfileService {
                 })
                 .toList();
     }
+
 
     /* ================================
        PAGINATED STUDENT LIST (FRONTEND)
@@ -204,5 +206,50 @@ public class ProfileService {
                         s.getExperiences()
                 ));
     }
+    @Transactional(readOnly = true)
+    public Page<StudentProfileResponseDto> searchStudents(
+            String branch,
+            Double minTenth,
+            Double minTwelfth,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<StudentProfile> pageResult = profileRepo.findAll(pageable);
+
+        List<StudentProfileResponseDto> filtered = pageResult.getContent()
+                .stream()
+                .filter(s -> branch == null || s.getBranch().equalsIgnoreCase(branch))
+                .filter(s -> minTenth == null || s.getAcademics().getTenthMarks() >= minTenth)
+                .filter(s -> minTwelfth == null || s.getAcademics().getTwelfthMarks() >= minTwelfth)
+                .map(this::mapToDto)
+                .toList();
+
+        return new PageImpl<>(
+                filtered,
+                pageable,
+                pageResult.getTotalElements()
+        );
+    }
+
+
+    private StudentProfileResponseDto mapToDto(StudentProfile s) {
+        return new StudentProfileResponseDto(
+                s.getId(),
+                s.getEmail(),
+                s.getFullName(),
+                s.getRollNo(),
+                s.getBranch(),
+                s.isVerified(),
+                s.isBlacklisted(),
+                s.getAcademics(),
+                s.getSkills(),
+                s.getDocuments(),
+                s.getExperiences()
+        );
+    }
+
+
 
 }

@@ -83,12 +83,16 @@ public class DriveService {
         List<StudentEligibilityDto> students =
                 profileClient.getEligibleStudents();
 
+        List<String> requiredSkills = List.of(c.getRequiredSkills().split(","));
         List<String> eligible = students.stream()
                 .filter(s -> s.getTenthMarks() >= c.getMinTenth())
                 .filter(s -> s.getTwelfthMarks() >= c.getMinTwelfth())
+                .filter(s -> s.getSkills().containsAll(requiredSkills))
                 .map(StudentEligibilityDto::getEmail)
                 .toList();
-
+        for(String s : eligible) {
+            System.out.println(s);
+        }
         selectionClient.invite(
                 new InviteStudentsDto(driveId, eligible)
         );
@@ -117,6 +121,23 @@ public class DriveService {
 
         return List.of();
     }
+
+    @Transactional(readOnly = true)
+    public List<StudentEligibilityDto> previewEligibleStudents(Long driveId) {
+
+        Drive drive = driveRepo.findById(driveId).orElseThrow();
+        DriveCriteria c = criteriaRepo.findByDrive(drive);
+
+        List<StudentEligibilityDto> students = profileClient.getEligibleStudents();
+        List<String> requiredSkills = List.of(c.getRequiredSkills().split(","));
+
+        return students.stream()
+                .filter(s -> s.getTenthMarks() >= c.getMinTenth())
+                .filter(s -> s.getTwelfthMarks() >= c.getMinTwelfth())
+                .filter(s -> s.getSkills().containsAll(requiredSkills))
+                .toList();
+    }
+
 
     private DriveResponseDto buildResponse(Drive d) {
         return new DriveResponseDto(

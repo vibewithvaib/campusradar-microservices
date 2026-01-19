@@ -19,10 +19,15 @@ public class DriveSelection {
     private String studentEmail;
 
     private int currentRound;
-    private boolean active = true;
+
+    private boolean invited = false;
+    private boolean acceptedInvite = false;
+
+    private boolean active = false;
     private boolean selected = false;
     private boolean rejected = false;
 
     private LocalDateTime updatedAt;
 }
+
 

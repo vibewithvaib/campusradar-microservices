@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class StudentEligibilityDto {
-
+    private Long studentId;
     private String email;
     private Double tenthMarks;
     private Double twelfthMarks;
